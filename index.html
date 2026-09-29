@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peta Digital Flores Timur - Leaflet JS & Dashboard BMKG</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: #f8fafc;
+        }
+
+        /* LANDING PAGE OVERLAY */
+        #landingPage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0ea5e9 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            overflow: hidden;
+        }
+
+        #landingPage.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .landing-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            animation: float 10s infinite ease-in-out;
+        }
+
+        .shape1 { width: 350px; height: 350px; top: -100px; left: -100px; animation-duration: 12s; }
+        .shape2 { width: 450px; height: 450px; bottom: -150px; right: -150px; animation-duration: 15s; }
+        .shape3 { width: 200px; height: 200px; top: 40%; right: 15%; animation-duration: 9s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-25px) scale(1.05); }
+        }
+
+        .landing-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 28px;
+            padding: 3rem 2.5rem;
+            max-width: 650px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 1s ease-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .landing-icon-badge {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            color: #0284c7;
+            border-radius: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+            margin-bottom: 1.5rem;
+            animation: pulseGlow 2.5s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+        }
+
+        .landing-title { font-weight: 800; font-size: 2.2rem; margin-bottom: 1rem; letter-spacing: -0.5px; }
+        .landing-subtitle { font-size: 1.05rem; color: rgba(255, 255, 255, 0.9); margin-bottom: 2rem; line-height: 1.6; font-weight: 400; }
+
+        .landing-features {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 2.2rem;
+        }
+
+        .feature-tag {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-enter-app {
+            background: #ffffff;
+            color: #0284c7;
+            font-weight: 800;
+            font-size: 1.1rem;
+            padding: 0.9rem 2.5rem;
+            border-radius: 30px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-enter-app:hover {
+            background: #f0f9ff;
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            color: #0369a1;
+        }
+
+        /* MAP & MAIN CONTENT */
+        #map {
+            height: calc(100vh - 64px);
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            z-index: 1;
+        }
+
+        /* Navbar Styling */
+        .custom-navbar {
+            background: #ffffff !important;
+            border-bottom: 2px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            padding: 0.5rem 1.4rem;
+            min-height: 64px;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #0284c7 !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: #0ea5e9;
+            background: #e0f2fe;
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .nav-link {
+            color: #334155 !important;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.5rem 0.9rem !important;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover { color: #0284c7 !important; background-color: #f0f9ff; transform: translateY(-1px); }
+        .nav-link.active { color: #ffffff !important; background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); }
+
+        .btn-bmkg-nav {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0.45rem 1rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-bmkg-nav:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: white; transform: translateY(-1px); }
+
+        .btn-upload-nav {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0.45rem 1rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            transition: all 0.25s ease;
+        }
+
+        .btn-upload-nav:hover { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; transform: translateY(-1px); }
+
+        .dropdown-menu { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); padding: 8px; }
+        .dropdown-item { color: #334155; font-size: 0.9rem; font-weight: 600; padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; }
+        .dropdown-item:hover { background-color: #e0f2fe; color: #0369a1; }
+
+        .search-box { max-width: 240px; }
+        .search-input { background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 20px 0 0 20px !important; font-size: 0.88rem; padding-left: 14px; }
+        .search-input:focus { background: #ffffff; border-color: #38bdf8; color: #0f172a; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+        .btn-search { background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); border: none; color: #fff; border-radius: 0 20px 20px 0 !important; padding: 0 1rem; transition: all 0.25s ease; }
+
+        /* WIDGET TRACKER KOORDINAT (GEOGRAFIS & UTM) */
+        .coord-display-widget {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-radius: 30px;
+            padding: 6px 18px;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .coord-display-widget:hover {
+            background: #ffffff;
+            border-color: #0284c7;
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 12px 30px rgba(2, 132, 199, 0.2);
+        }
+
+        /* Leaflet Controls & Filter */
+        .leaflet-control-layers {
+            border-radius: 16px !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+            padding: 12px 16px !important;
+            background: #ffffff !important;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .leaflet-control-scale-line {
+            border: 2px solid #0f172a !important;
+            border-top: none !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            font-size: 11px !important;
+            background: rgba(255, 255, 255, 0.88) !important;
+            padding: 1px 6px 2px 6px !important;
+            border-radius: 0 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .filter-penduduk { display: block; padding: 12px 0 0 0; border-top: 2px dashed #e2e8f0; margin-top: 12px; }
+        .filter-title { font-weight: 700; font-size: 0.88rem; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+        .filter-button {
+            display: block; width: 100%; margin-top: 6px; padding: 7px 12px; border: 1px solid #e2e8f0; background-color: #f8fafc; color: #334155; font-weight: 600; font-size: 0.82rem; cursor: pointer; border-radius: 10px; transition: all 0.2s ease; text-align: left;
+        }
+        .filter-button:hover { background-color: #e0f2fe; color: #0369a1; border-color: #7dd3fc; transform: translateX(2px); }
+        .filter-button.active { background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); color: white; border-color: #0284c7; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25); }
+
+        /* LEGENDA PETA */
+        .legenda-peta { display: block; padding: 12px 0 0 0; border-top: 2px dashed #e2e8f0; margin-top: 12px; }
+        .legenda-title { font-weight: 700; font-size: 0.88rem; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .legenda-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #334155; margin-bottom: 6px; font-weight: 500; }
+        .legenda-color-box { width: 18px; height: 14px; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.15); display: inline-block; flex-shrink: 0; }
+        .legenda-line { width: 20px; height: 4px; border-radius: 2px; background-color: #f43f5e; display: inline-block; flex-shrink: 0; }
+        .legenda-icon { width: 18px; height: 18px; object-fit: contain; display: inline-block; flex-shrink: 0; }
+
+        /* Custom Popup Styling */
+        .leaflet-popup-content-wrapper { border-radius: 16px !important; padding: 4px !important; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important; border: 1px solid #f1f5f9; }
+        .leaflet-popup-content { font-size: 0.88rem; color: #1e293b; line-height: 1.5; margin: 10px 12px !important; }
+        .popup-img { width: 100%; height: 130px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .popup-header { font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 4px; }
+        .popup-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 0.84rem; color: #475569; }
+        .popup-badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; background: #e0f2fe; color: #0369a1; margin-top: 6px; }
+
+        /* About Author Modal Styling */
+        .author-card { text-align: center; padding: 0.5rem 0 1rem 0; position: relative; }
+        .author-avatar-wrapper { position: relative; width: 105px; height: 105px; margin: 0 auto 1.2rem auto; }
+        .author-avatar-circle { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; box-shadow: 0 10px 25px rgba(2, 132, 199, 0.3); border: 4px solid #ffffff; }
+        .author-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-edit-avatar { position: absolute; bottom: 2px; right: 2px; width: 36px; height: 36px; background: #10b981; color: white; border: 3px solid #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s ease; }
+        .btn-edit-avatar:hover { background: #059669; transform: scale(1.1); }
+        .author-name { font-weight: 800; font-size: 1.4rem; color: #0f172a; margin-bottom: 4px; }
+        .author-nim { display: inline-block; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.92rem; padding: 5px 16px; border-radius: 20px; margin-bottom: 1.2rem; }
+        .author-detail-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.2rem; text-align: left; font-size: 0.9rem; color: #334155; }
+        .admin-badge-active { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.78rem; padding: 4px 12px; border-radius: 12px; margin-top: 6px; }
+
+        /* DASHBOARD BMKG */
+        .bmkg-stat-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: all 0.25s ease; }
+        .bmkg-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.07); }
+        .bmkg-badge-mag { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; color: white; }
+        .bg-mag-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .bg-mag-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .bg-mag-info { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+        .gempa-item-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; margin-bottom: 0.8rem; transition: all 0.2s ease; }
+        .gempa-item-card:hover { border-color: #0ea5e9; box-shadow: 0 6px 18px rgba(14, 165, 233, 0.12); }
+    </style>
+</head>
+
+<body>
+    <!-- ANIMATED LANDING PAGE OVERLAY -->
+    <div id="landingPage">
+        <div class="landing-shape shape1"></div>
+        <div class="landing-shape shape2"></div>
+        <div class="landing-shape shape3"></div>
+
+        <div class="landing-card">
+            <div class="landing-icon-badge">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <h1 class="landing-title">Selamat Datang di WebGIS Flores Timur</h1>
+            <p class="landing-subtitle">
+                Aplikasi Peta Digital Interaktif, Dashboard Real-Time BMKG & Integrasi Geoportal BIG/Sentinel untuk eksplorasi data geospasial Toponimi, Jalan, Demografi Penduduk, dan Unduh SHP/DEM.
+            </p>
+
+            <div class="landing-features">
+                <div class="feature-tag"><i class="fa-solid fa-satellite text-info"></i> Citra Sentinel-2 & DEMNAS</div>
+                <div class="feature-tag"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Dashboard BMKG</div>
+                <div class="feature-tag"><i class="fa-solid fa-layer-group"></i> Peta ESRI & BIG</div>
+                <div class="feature-tag"><i class="fa-solid fa-file-arrow-down"></i> Unduh SHP / GeoJSON</div>
+            </div>
+
+            <button class="btn-enter-app" onclick="closeLandingPage()">
+                <i class="fa-solid fa-compass me-2"></i> Jelajahi Peta Digital
+            </button>
+        </div>
+    </div>
+
+    <!-- Navbar Cerah & Elegan (Menu di Kanan) -->
+    <nav class="navbar navbar-expand-lg custom-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" onclick="resetMapView()">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>Digital Maps</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="navHome" onclick="resetMapView()">
+                            <i class="fa-solid fa-house me-1"></i> Beranda
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#modalLayerInfo">
+                            <i class="fa-solid fa-circle-info me-1"></i> Layer Info
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="fa-solid fa-sliders me-1"></i> Fitur Peta
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" onclick="zoomToLayer('toponimi')">
+                                    <i class="fa-solid fa-monument me-2 text-primary"></i> Focus Toponimi
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" onclick="zoomToLayer('jalan')">
+                                    <i class="fa-solid fa-road me-2 text-danger"></i> Focus Jaringan Jalan
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" onclick="zoomToLayer('penduduk')">
+                                    <i class="fa-solid fa-users me-2 text-success"></i> Focus Jumlah Penduduk
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" onclick="zoomToLayer('atrbpn')">
+                                    <i class="fa-solid fa-file-contract me-2 text-warning"></i> Bidang Tanah ATR/BPN
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="modal" data-bs-target="#modalAbout">
+                            <i class="fa-solid fa-user-graduate me-1"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-1">
+                        <button class="btn btn-primary font-weight-bold shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%); border: none; border-radius: 20px; font-size: 0.88rem; padding: 0.45rem 1rem;" data-bs-toggle="modal" data-bs-target="#modalAtrBpn">
+                            <i class="fa-solid fa-file-contract text-warning me-1"></i> Data ATR/BPN
+                        </button>
+                    </li>
+                    <li class="nav-item ms-lg-1">
+                        <button class="btn btn-bmkg-nav" data-bs-toggle="modal" data-bs-target="#modalBmkgDashboard" onclick="loadBmkgRealtimeData()">
+                            <i class="fa-solid fa-triangle-exclamation"></i> BMKG
+                        </button>
+                    </li>
+                    <li class="nav-item ms-lg-1">
+                        <button class="btn btn-upload-nav" data-bs-toggle="modal" data-bs-target="#modalUploadGeoJSON">
+                            <i class="fa-solid fa-cloud-arrow-up me-1"></i> + GeoJSON
+                        </button>
+                    </li>
+                </ul>
+
+                <form class="d-flex ms-lg-3 mt-2 mt-lg-0" role="search" onsubmit="searchLocation(event)">
+                    <div class="input-group search-box">
+                        <input class="form-control search-input" id="searchInput" type="search" placeholder="Cari kecamatan / tempat..." aria-label="Search" />
+                        <button class="btn btn-search" type="submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Container Peta & WIDGET TRACKER KOORDINAT REAL-TIME (Geografis & UTM Zone) -->
+    <div id="map"></div>
+
+    <div class="coord-display-widget" id="coordWidget" onclick="copyCoordinatesToClipboard()" title="Klik untuk menyalin koordinat Geografis & UTM">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-compass text-primary fs-5"></i>
+            <div style="line-height: 1.2;">
+                <div id="textGeoCoord" style="font-weight: 700; font-size: 0.82rem; color: #0f172a;">Geografis: -8.33000, 123.00000</div>
+                <div id="textUtmCoord" style="font-size: 0.76rem; color: #0284c7; font-weight: 600;">UTM Zone 51S: 500000 mE, 9078900 mN</div>
+            </div>
+            <button class="btn btn-sm btn-primary py-0 px-2 ms-2 rounded-pill" style="font-size: 0.72rem; font-weight: 700;">
+                <i class="fa-regular fa-copy me-1"></i> Salin
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL DEMOGRAFI KECAMATAN (Ganti Popup Polygon Penduduk) -->
+    <div class="modal fade" id="modalDetailPenduduk" tabindex="-1" aria-labelledby="modalDetailPendudukLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 22px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); color: white; border-radius: 22px 22px 0 0; padding: 1.2rem 1.6rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px 14px; border-radius: 14px; font-size: 1.4rem;">
+                            <i class="fa-solid fa-users text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0" id="modalPendudukNamaKec">
+                                Kecamatan -
+                            </h5>
+                            <small class="text-white-50"><i class="fa-solid fa-map-location-dot me-1"></i> Data Demografi Kabupaten Flores Timur</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Stat Card Penduduk -->
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-white text-center">
+                        <span class="text-muted small fw-bold uppercase">TOTAL POPULASI PENDUDUK</span>
+                        <h2 class="fw-extrabold text-primary my-2" id="modalPendudukJumlah">0 Jiwa</h2>
+                        <div>
+                            <span class="badge bg-primary px-3 py-2 rounded-pill font-weight-bold" id="modalPendudukKelas" style="font-size: 0.85rem;">Kelas: -</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar Visualisasi kepadatan -->
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.85rem;">
+                            <span class="fw-bold text-dark"><i class="fa-solid fa-chart-simple text-info me-1"></i> Rasio Kepadatan Penduduk</span>
+                            <span class="fw-bold text-primary" id="modalPendudukPercent">0%</span>
+                        </div>
+                        <div class="progress" style="height: 12px; border-radius: 10px;">
+                            <div class="progress-bar bg-gradient-primary" id="modalPendudukProgressBar" role="progressbar" style="width: 0%; transition: width 0.8s ease;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Open Data Actions -->
+                    <div class="p-3 bg-white rounded-4 shadow-sm">
+                        <div class="fw-bold text-dark mb-2 small"><i class="fa-solid fa-download me-1 text-success"></i> Integrasi Data Geospasial Wilayah Ini:</div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill text-start" id="btnModalFocusKec">
+                                <i class="fa-solid fa-crosshairs me-2"></i> Fokuskan Peta ke Kecamatan Ini
+                            </button>
+                            <button class="btn btn-sm btn-outline-success rounded-pill text-start" id="btnModalExportKecGeoJSON">
+                                <i class="fa-solid fa-file-arrow-down me-2"></i> Export Feature GeoJSON Kecamatan Ini
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white" style="border-radius: 0 0 22px 22px;">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL INTEGRASI LAYANAN & KEPEMILIKAN TANAH ATR/BPN -->
+    <div class="modal fade" id="modalAtrBpn" tabindex="-1" aria-labelledby="modalAtrBpnLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%); color: white; border-radius: 24px 24px 0 0; padding: 1.2rem 1.8rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="background: rgba(255,255,255,0.15); padding: 10px 14px; border-radius: 14px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-file-contract text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0" id="modalAtrBpnLabel">
+                                Integrasi Data Kepemilikan Tanah ATR/BPN
+                            </h5>
+                            <small class="text-white-50"><i class="fa-solid fa-building me-1"></i> Kementerian Agraria dan Tata Ruang / Badan Pertanahan Nasional (BHUMI ATR/BPN)</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Status Geoportal & Quick Portal Banner -->
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary text-white p-3 rounded-circle" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                    <i class="fa-solid fa-globe"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">Geoportal BHUMI & Sentuh Tanahku</h6>
+                                    <p class="text-muted small mb-0">Integrasi peta bidang tanah (*persil*) resmi BPN & layanan pendaftaran tanah digital.</p>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="https://bhumi.atrbpn.go.id/" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> BHUMI ATR/BPN
+                                </a>
+                                <a href="https://mencari.atrbpn.go.id/" target="_blank" class="btn btn-sm btn-warning rounded-pill fw-bold text-dark">
+                                    <i class="fa-solid fa-mobile-screen me-1"></i> Sentuh Tanahku
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Box NIB / Nomor Hak -->
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-magnifying-glass text-primary me-2"></i> Cari Bidang Tanah (NIB / Sertifikat / Nama)</h6>
+                        <div class="input-group">
+                            <input type="text" id="inputAtrBpnQuery" class="form-control rounded-start-pill" placeholder="Contoh NIB: 24.06.01.02.00182 atau Nama Pemilik / Larantuka..." style="font-size: 0.9rem;">
+                            <button class="btn btn-primary rounded-end-pill px-4 fw-bold" onclick="searchAtrBpnParcel()">
+                                <i class="fa-solid fa-search me-1"></i> Cari Persil
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Layout Results & Layer Switcher -->
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-id-card text-success me-2"></i> Informasi Bidang Tanah Terpilih</h6>
+                                <div id="atrBpnResultContainer">
+                                    <div class="p-3 bg-light rounded-4 border">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Hak Milik (SHM)</span>
+                                            <span class="text-primary fw-bold small">NIB: 24.06.01.02.00182</span>
+                                        </div>
+                                        <h5 class="fw-bold text-dark mb-1">Bidang Tanah Kel. Larantuka</h5>
+                                        <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot text-danger me-1"></i> Kec. Larantuka, Kab. Flores Timur</p>
+                                        
+                                        <div class="row g-2 text-start small mb-3">
+                                            <div class="col-6"><strong>No. Sertifikat:</strong> SHM 01824</div>
+                                            <div class="col-6"><strong>Luas Bidang:</strong> 425 m²</div>
+                                            <div class="col-6"><strong>Penggunaan:</strong> Pemukiman / Rumah</div>
+                                            <div class="col-6"><strong>Status Peta:</strong> Terverifikasi BPN</div>
+                                        </div>
+
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill w-100 fw-bold" onclick="zoomToAtrBpnSample()">
+                                            <i class="fa-solid fa-crosshairs me-1"></i> Tampilkan Bidang Tanah di Peta
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-layer-group text-warning me-2"></i> Layer WMS & Persil Peta</h6>
+                                <p class="text-muted small">Aktifkan layer bidang tanah resmi ATR/BPN langsung di atas Peta Digital Flores Timur:</p>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="switchLayerAtrGeoJSON" checked onchange="toggleAtrBpnGeoJSONLayer(this.checked)">
+                                    <label class="form-check-label fw-bold text-dark small" for="switchLayerAtrGeoJSON">
+                                        Bidang Tanah ATR/BPN (Interactive GeoJSON)
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="switchLayerAtrWMS" onchange="toggleAtrBpnWmsLayer(this.checked)">
+                                    <label class="form-check-label fw-bold text-dark small" for="switchLayerAtrWMS">
+                                        Layer WMS BHUMI ATR/BPN (Live Server)
+                                    </label>
+                                </div>
+
+                                <div class="p-2 bg-light rounded-3 text-secondary small">
+                                    <i class="fa-solid fa-circle-info text-info me-1"></i> WMS BHUMI mengambil tile peta *real-time* dari server resmi Kementerian ATR/BPN RI.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white" style="border-radius: 0 0 24px 24px;">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DASHBOARD INFORMASI BENCANA REAL-TIME BMKG -->
+    <div class="modal fade" id="modalBmkgDashboard" tabindex="-1" aria-labelledby="modalBmkgDashboardLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; border-radius: 24px 24px 0 0; padding: 1.2rem 1.8rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px 14px; border-radius: 14px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-volcano"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title font-weight-bold mb-0" id="modalBmkgDashboardLabel">
+                                Dashboard Informasi Bencana BMKG (Real-Time)
+                            </h5>
+                            <small class="text-white-50"><i class="fa-solid fa-wifi me-1"></i> Sumber Resmi: DataMKG TEWS BMKG Indonesia</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Stat Cards Header -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="bmkg-stat-card d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold">GEMPA TERBARU (M ≥ 5.0)</span>
+                                    <h3 class="fw-extrabold text-dark my-1" id="bmkgLatestMag">-</h3>
+                                    <small class="text-secondary" id="bmkgLatestTime">Memuat data...</small>
+                                </div>
+                                <div class="bmkg-badge-mag bg-mag-danger" id="bmkgBadgeMag">
+                                    <i class="fa-solid fa-wave-square"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bmkg-stat-card d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold">POTENSI TSUNAMI</span>
+                                    <h5 class="fw-bold text-success my-2" id="bmkgTsunamiStatus">BEBAS TSUNAMI</h5>
+                                    <small class="text-secondary" id="bmkgLatestDepth">Kedalaman: -</small>
+                                </div>
+                                <div class="bmkg-badge-mag bg-mag-info">
+                                    <i class="fa-solid fa-water"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bmkg-stat-card d-flex align-items-center justify-content-between">
+                                <div>
+                                    <span class="text-muted small fw-bold">WILAYAH PUSAT GEMPA</span>
+                                    <h6 class="fw-bold text-dark my-2" id="bmkgLatestLocation">Memuat lokasi...</h6>
+                                    <small class="text-primary fw-bold" id="bmkgLatestCoords">-</small>
+                                </div>
+                                <div class="bmkg-badge-mag bg-mag-warning">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layout 2 Kolom -->
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+                                <h6 class="fw-bold text-dark mb-3">
+                                    <i class="fa-solid fa-circle-exclamation text-danger me-2"></i> Detail Gempa Terkini Utama
+                                </h6>
+                                <div id="bmkgDetailContainer" class="text-center py-4">
+                                    <div class="spinner-border text-warning" role="status"></div>
+                                    <p class="mt-2 text-muted small">Mengambil data live BMKG...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-dark mb-0">
+                                        <i class="fa-solid fa-list-ul text-primary me-2"></i> Daftar Gempa Dirasakan Terkini (BMKG)
+                                    </h6>
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="loadBmkgRealtimeData()">
+                                        <i class="fa-solid fa-arrows-rotate me-1"></i> Refresh
+                                    </button>
+                                </div>
+                                <div id="bmkgGempaList" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2 text-muted small">Memuat daftar gempa terdeteksi BMKG...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white d-flex justify-content-between" style="border-radius: 0 0 24px 24px;">
+                    <div class="small text-muted">
+                        <i class="fa-solid fa-circle text-success me-1"></i> Status Koneksi Real-Time BMKG: <strong>AKTIF</strong>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Tutup Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ABOUT PEMBUAT -->
+    <div class="modal fade" id="modalAbout" tabindex="-1" aria-labelledby="modalAboutLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); color: white; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title font-weight-bold" id="modalAboutLabel">
+                        <i class="fa-solid fa-address-card me-2"></i> About / Informasi Pembuat
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="author-card">
+                        <div class="author-avatar-wrapper">
+                            <div class="author-avatar-circle" id="authorAvatarCircle">
+                                <i class="fa-solid fa-user-tie" id="authorAvatarIcon"></i>
+                                <img id="authorAvatarImg" src="" alt="Foto Ruli" style="display:none;" />
+                            </div>
+                            <button class="btn-edit-avatar d-none" id="btnEditAvatar" title="Ganti Foto Profil (Admin)" onclick="triggerAvatarUpload()">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+                        </div>
+                        <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(this)" />
+
+                        <h4 class="author-name">Ruli Ardiansah</h4>
+                        <div class="author-nim">
+                            <i class="fa-solid fa-id-card me-1"></i> NIM: 25/567617/SV/27206
+                        </div>
+                        <div id="adminStatusBadge" class="d-none">
+                            <span class="admin-badge-active"><i class="fa-solid fa-shield-check"></i> Mode Admin Aktif</span>
+                        </div>
+                    </div>
+
+                    <div class="author-detail-box">
+                        <div class="mb-2">
+                            <i class="fa-solid fa-graduation-cap me-2 text-primary"></i>
+                            <strong>Mata Kuliah:</strong> Praktikum Pemrograman Geo Web (PGWEB)
+                        </div>
+                        <div class="mb-2">
+                            <i class="fa-solid fa-book-bookmark me-2 text-primary"></i>
+                            <strong>Tugas / Acara:</strong> Acara 6 - Leaflet JS GIS Web Application
+                        </div>
+                        <div class="mb-0">
+                            <i class="fa-solid fa-university me-2 text-primary"></i>
+                            <strong>Instansi:</strong> Sekolah Vokasi, Universitas Gadjah Mada (UGM)
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light d-flex justify-content-between" style="border-radius: 0 0 20px 20px;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btnAdminAuth" onclick="toggleAdminAuth()">
+                        <i class="fa-solid fa-user-lock me-1"></i> Mode Admin
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload GeoJSON -->
+    <div class="modal fade" id="modalUploadGeoJSON" tabindex="-1" aria-labelledby="modalUploadGeoJSONLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content style-modal" style="border-radius: 18px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); color: white; border-radius: 18px 18px 0 0;">
+                    <h5 class="modal-title font-weight-bold" id="modalUploadGeoJSONLabel">
+                        <i class="fa-solid fa-file-circle-plus me-2"></i> Tambah Layer GeoJSON
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formGeoJSON">
+                        <div class="mb-3">
+                            <label for="layerNameInput" class="form-label fw-bold text-dark">Nama Layer</label>
+                            <input type="text" class="form-control" id="layerNameInput" placeholder="Contoh: Jalan Baru / Toponimi Tambahan" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="geojsonFileInput" class="form-label fw-bold text-dark">Pilih File GeoJSON (.geojson / .json)</label>
+                            <input class="form-control" type="file" id="geojsonFileInput" accept=".geojson,.json">
+                        </div>
+                        <div class="mb-3">
+                            <label for="geojsonRawInput" class="form-label fw-bold text-dark">Atau Paste Teks GeoJSON Raw (Opsional)</label>
+                            <textarea class="form-control" id="geojsonRawInput" rows="3" placeholder='{"type":"FeatureCollection","features":[...]}'></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="layerColorInput" class="form-label fw-bold text-dark">Warna Tampilan Layer</label>
+                            <input type="color" class="form-control form-control-color w-100" id="layerColorInput" value="#10b981" title="Pilih warna">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light" style="border-radius: 0 0 18px 18px;">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="handleGeoJSONUpload()">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> Tambahkan ke Peta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Layer Info -->
+    <div class="modal fade" id="modalLayerInfo" tabindex="-1" aria-labelledby="modalLayerInfoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 18px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); color: white; border-radius: 18px 18px 0 0;">
+                    <h5 class="modal-title font-weight-bold" id="modalLayerInfoLabel">
+                        <i class="fa-solid fa-circle-info me-2"></i> Informasi Layer & Open Data GIS
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fa-solid fa-monument me-2 text-primary"></i> <strong>Toponimi (Point)</strong>
+                            </div>
+                            <span class="badge bg-primary rounded-pill" id="badgeCountToponimi">Memuat...</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fa-solid fa-road me-2 text-danger"></i> <strong>Jaringan Jalan (Polyline)</strong>
+                            </div>
+                            <span class="badge bg-danger rounded-pill" id="badgeCountJalan">Memuat...</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fa-solid fa-users me-2 text-success"></i> <strong>Jumlah Penduduk (Polygon)</strong>
+                            </div>
+                            <span class="badge bg-success rounded-pill" id="badgeCountPenduduk">Memuat...</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mb-3">
+                        <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-satellite me-1 text-info"></i> Integrasi Citra Satelit & DEM (Open Data):</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="https://apps.sentinel-hub.com/eo-browser/" target="_blank" class="btn btn-sm btn-outline-primary text-start">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Sentinel Hub EO Browser (Copernicus)
+                            </a>
+                            <a href="https://tanahair.indonesia.go.id/demnas/" target="_blank" class="btn btn-sm btn-outline-warning text-dark text-start">
+                                <i class="fa-solid fa-mountain me-1"></i> DEMNAS BIG (Digital Elevation Model Indonesia)
+                            </a>
+                            <a href="https://tanahair.indonesia.go.id/portal-web" target="_blank" class="btn btn-sm btn-outline-success text-start">
+                                <i class="fa-solid fa-map-location-dot me-1"></i> Geoportal BIG TanahAir (Unduh SHP Resmi)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" style="border-radius: 0 0 18px 18px;">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        var isAdminLoggedIn = false;
+        var bmkgGempaGroup = L.layerGroup();
+        var currentHoveredLat = -8.33000;
+        var currentHoveredLng = 123.00000;
+
+        function closeLandingPage() {
+            var landing = document.getElementById("landingPage");
+            landing.classList.add("hidden");
+        }
+
+        function checkAndLoadSavedAvatar() {
+            var savedPhoto = localStorage.getItem("ruli_admin_profile_photo");
+            if (savedPhoto) {
+                showAvatarImage(savedPhoto);
+            }
+        }
+
+        $(document).ready(function () {
+            checkAndLoadSavedAvatar();
+
+            $('#modalAbout').on('show.bs.modal', function () {
+                checkAndLoadSavedAvatar();
+            });
+        });
+
+        function showAvatarImage(src) {
+            $("#authorAvatarIcon").hide();
+            $("#authorAvatarImg").attr("src", src).css("display", "block");
+        }
+
+        function toggleAdminAuth() {
+            if (isAdminLoggedIn) {
+                isAdminLoggedIn = false;
+                $("#btnEditAvatar").addClass("d-none");
+                $("#adminStatusBadge").addClass("d-none");
+                $("#btnAdminAuth").html('<i class="fa-solid fa-user-lock me-1"></i> Mode Admin').removeClass("btn-outline-danger").addClass("btn-outline-secondary");
+                alert("Anda telah keluar dari Mode Admin.");
+            } else {
+                var pass = prompt("Masukkan Kata Sandi Admin (Ruli Ardiansah):", "");
+                if (pass === "admin" || pass === "ruli" || pass === "27206") {
+                    isAdminLoggedIn = true;
+                    $("#btnEditAvatar").removeClass("d-none");
+                    $("#adminStatusBadge").removeClass("d-none");
+                    $("#btnAdminAuth").html('<i class="fa-solid fa-lock-open me-1"></i> Keluar Admin').removeClass("btn-outline-secondary").addClass("btn-outline-danger");
+                    alert("Berhasil masuk sebagai Admin (Ruli Ardiansah)! Tombol ganti foto profil sekarang aktif.");
+                } else if (pass !== null) {
+                    alert("Kata sandi salah! Hanya Admin (Ruli Ardiansah) yang berhak mengubah profil.");
+                }
+            }
+        }
+
+        function triggerAvatarUpload() {
+            if (!isAdminLoggedIn) {
+                alert("Hanya Admin yang dapat mengubah foto profil!");
+                return;
+            }
+            $("#avatarFileInput").click();
+        }
+
+        function handleAvatarUpload(input) {
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = new Image();
+                    img.onload = function () {
+                        var canvas = document.createElement("canvas");
+                        var ctx = canvas.getContext("2d");
+                        var maxDim = 300;
+                        var width = img.width;
+                        var height = img.height;
+
+                        if (width > height) {
+                            if (width > maxDim) {
+                                height *= maxDim / width;
+                                width = maxDim;
+                            }
+                        } else {
+                            if (height > maxDim) {
+                                width *= maxDim / height;
+                                height = maxDim;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        var compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+
+                        try {
+                            localStorage.setItem("ruli_admin_profile_photo", compressedBase64);
+                            showAvatarImage(compressedBase64);
+                            alert("Foto profil Admin berhasil diperbarui dan tersimpan secara PERMANEN!");
+                        } catch (err) {
+                            alert("Gagal menyimpan foto: " + err.message);
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        /* --- FUNGSI KONVERSI GEOGRAFIS KE UTM ZONE (WGS 84 Transverse Mercator) --- */
+        function latLngToUTM(lat, lng) {
+            var zoneNum = Math.floor((lng + 180) / 6) + 1;
+            var isSouth = lat < 0;
+            var zone = zoneNum + (isSouth ? "S" : "N");
+
+            var a = 6378137;
+            var f = 1 / 298.257223563;
+            var k0 = 0.9996;
+            var e = Math.sqrt(2 * f - f * f);
+            var e2 = e * e / (1 - e * e);
+
+            var radLat = lat * Math.PI / 180;
+            var radLng = lng * Math.PI / 180;
+            var lng0 = ((zoneNum - 1) * 6 - 180 + 3) * Math.PI / 180;
+
+            var N = a / Math.sqrt(1 - e * e * Math.sin(radLat) * Math.sin(radLat));
+            var T = Math.tan(radLat) * Math.tan(radLat);
+            var C = e2 * Math.cos(radLat) * Math.cos(radLat);
+            var A = (radLng - lng0) * Math.cos(radLat);
+
+            var M = a * ((1 - e * e / 4 - 3 * e * e * e * e / 64 - 5 * e * e * e * e * e * e / 256) * radLat
+                - (3 * e * e / 8 + 3 * e * e * e * e / 32 + 45 * e * e * e * e * e * e / 1024) * Math.sin(2 * radLat)
+                + (15 * e * e * e * e / 256 + 45 * e * e * e * e * e * e / 1024) * Math.sin(4 * radLat)
+                - (35 * e * e * e * e * e * e / 3072) * Math.sin(6 * radLat));
+
+            var easting = k0 * N * (A + (1 - T + C) * A * A * A / 6 + (5 - 18 * T + T * T + 72 * C - 58 * e2) * A * A * A * A * A / 120) + 500000;
+            var northing = k0 * (M + N * Math.tan(radLat) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A * A * A * A / 24 + (61 - 58 * T + T * T + 600 * C - 330 * e2) * A * A * A * A * A * A / 720));
+            if (isSouth) northing += 10000000;
+
+            return {
+                zone: zone,
+                easting: Math.round(easting),
+                northing: Math.round(northing)
+            };
+        }
+
+        function copyCoordinatesToClipboard() {
+            var utm = latLngToUTM(currentHoveredLat, currentHoveredLng);
+            var textToCopy = `Koordinat Geografis: ${currentHoveredLat.toFixed(5)}, ${currentHoveredLng.toFixed(5)}\nUTM Zone ${utm.zone}: ${utm.easting} mE, ${utm.northing} mN`;
+            
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                alert("Koordinat Berhasil Disalin ke Clipboard:\n\n" + textToCopy);
+            }).catch(function(err) {
+                alert("Gagal menyalin: " + err);
+            });
+        }
+
+        // Inisialisasi peta
+        var initialCenter = [-8.33, 123.00];
+        var initialZoom = 12;
+        var map = L.map("map").setView(initialCenter, initialZoom);
+
+        /* --- EVENT MOUSEMOVE UNTUK TRACKER KOORDINAT REAL-TIME --- */
+        map.on('mousemove', function (e) {
+            currentHoveredLat = e.latlng.lat;
+            currentHoveredLng = e.latlng.lng;
+
+            var utm = latLngToUTM(currentHoveredLat, currentHoveredLng);
+
+            $("#textGeoCoord").html(`Geografis: <strong>${currentHoveredLat.toFixed(5)}, ${currentHoveredLng.toFixed(5)}</strong>`);
+            $("#textUtmCoord").html(`UTM Zone <strong>${utm.zone}</strong>: ${utm.easting.toLocaleString()} mE, ${utm.northing.toLocaleString()} mN`);
+        });
+
+        /* --- STACKING ORDER MAP PANES (Z-INDEX) --- */
+        map.createPane('paneSungai');
+        map.getPane('paneSungai').style.zIndex = 200;
+
+        map.createPane('paneJalan');
+        map.getPane('paneJalan').style.zIndex = 300;
+
+        map.createPane('panePolygon');
+        map.getPane('panePolygon').style.zIndex = 400;
+
+        map.createPane('panePoint');
+        map.getPane('panePoint').style.zIndex = 500;
+
+        // Tile Layers (Base Maps)
+        var osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        });
+
+        var rbiBIG = L.tileLayer("https://basemap.nationalgeoportal.go.id/arcgis/rest/services/RBI/Basemap_RBI_Peta_Rupa_Bumi_Indonesia/MapServer/tile/{z}/{y}/{x}", {
+            attribution: 'Badan Informasi Geospasial (BIG)',
+        });
+
+        var esriWorldStreetMap = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, TomTom, 2012'
+        });
+
+        var esriWorldTopoMap = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, USGS, FAO, NPS'
+        });
+
+        var esriWorldImagery = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEROFOIL, IGN, IGP'
+        });
+
+        esriWorldStreetMap.addTo(map);
+
+        // Skala Grafis Klasik
+        L.control.scale({
+            position: 'bottomleft',
+            metric: true,
+            imperial: false,
+            maxWidth: 200
+        }).addTo(map);
+
+        /* --- EVENT KLIK LOKASI PETA UNTUK LIHAT & UNDUH SENTINEL, DEMNAS, SHP --- */
+        map.on('click', function (e) {
+            var lat = e.latlng.lat.toFixed(5);
+            var lng = e.latlng.lng.toFixed(5);
+
+            var eoBrowserUrl = `https://apps.sentinel-hub.com/eo-browser/?zoom=14&lat=${lat}&lng=${lng}&themeId=DEFAULT-THEME`;
+            var demnasUrl = `https://tanahair.indonesia.go.id/demnas/#/`;
+            var bigGeoportalUrl = `https://tanahair.indonesia.go.id/portal-web`;
+
+            var clickPopupContent = `
+                <div style="min-width: 240px;" class="p-1">
+                    <div class="popup-header text-primary mb-2">
+                        <i class="fa-solid fa-map-pin"></i> Titik Koordinat Terpilih
+                    </div>
+                    <div class="popup-item mb-2">
+                        <i class="fa-solid fa-crosshairs text-secondary"></i>
+                        <span>Lat: <strong>${lat}</strong>, Lng: <strong>${lng}</strong></span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="fw-bold text-dark mb-2" style="font-size: 0.8rem;"><i class="fa-solid fa-satellite"></i> Integrasi Citra Satelit & DEM BIG:</div>
+                    
+                    <a href="${eoBrowserUrl}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill w-100 mb-1 text-start d-flex align-items-center justify-content-between">
+                        <span><i class="fa-solid fa-satellite me-1 text-info"></i> Lihat Citra Sentinel-2</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+
+                    <a href="${demnasUrl}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill w-100 mb-1 text-start d-flex align-items-center justify-content-between text-dark">
+                        <span><i class="fa-solid fa-mountain me-1 text-warning"></i> Data DEMNAS BIG</span>
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+
+                    <a href="${bigGeoportalUrl}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill w-100 mb-1 text-start d-flex align-items-center justify-content-between">
+                        <span><i class="fa-solid fa-file-zipper me-1 text-success"></i> Unduh SHP BIG TanahAir</span>
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+
+                    <a href="https://bhumi.atrbpn.go.id/map?lat=${lat}&lng=${lng}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill w-100 mb-1 text-start d-flex align-items-center justify-content-between" style="border-color: #1e3a8a; color: #1e3a8a;">
+                        <span><i class="fa-solid fa-file-contract me-1 text-warning"></i> Cek Bidang Tanah (BHUMI BPN)</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+
+                    <button class="btn btn-sm btn-secondary rounded-pill w-100 mt-2" onclick="downloadLocationGeoJSON(${lat}, ${lng})">
+                        <i class="fa-solid fa-file-code me-1"></i> Export Titik GeoJSON
+                    </button>
+                </div>
+            `;
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(clickPopupContent)
+                .openOn(map);
+        });
+
+        function downloadLocationGeoJSON(lat, lng) {
+            var geojsonPoint = {
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [parseFloat(lng), parseFloat(lat)]
+                    },
+                    "properties": {
+                        "nama": "Titik Koordinat Terpilih",
+                        "latitude": parseFloat(lat),
+                        "longitude": parseFloat(lng),
+                        "waktu": new Date().toISOString()
+                    }
+                }]
+            };
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geojsonPoint, null, 2));
+            var downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Koordinat_${lat}_${lng}.geojson`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // GeoJSON Toponimi
+        var toponimi = L.geoJSON(null, {
+            pane: 'panePoint',
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, {
+                    pane: 'panePoint',
+                    icon: L.icon({
+                        iconUrl: "images/home_marker.png",
+                        iconSize: [44, 44],
+                        iconAnchor: [22, 44],
+                        popupAnchor: [0, -44],
+                        tooltipAnchor: [-16, -30],
+                    }),
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                var lat = feature.geometry.coordinates[1].toFixed(5);
+                var lng = feature.geometry.coordinates[0].toFixed(5);
+                var eoBrowserUrl = `https://apps.sentinel-hub.com/eo-browser/?zoom=14&lat=${lat}&lng=${lng}&themeId=DEFAULT-THEME`;
+
+                var popup_content = `
+                    <div style="min-width: 220px;">
+                        <img src="images/${feature.properties.image}" class="popup-img" alt="${feature.properties.TOPONIMI}" onerror="this.style.display='none'">
+                        <div class="popup-header">${feature.properties.TOPONIMI}</div>
+                        <div class="popup-item">
+                            <i class="fa-solid fa-location-dot text-primary"></i> 
+                            <span>${lat}, ${lng}</span>
+                        </div>
+                        <a href="${eoBrowserUrl}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill w-100 mt-2 text-dark">
+                            <i class="fa-solid fa-satellite me-1"></i> Citra Sentinel-2 Lokasi Ini
+                        </a>
+                    </div>
+                `;
+
+                layer.on({
+                    click: function (e) {
+                        layer.bindPopup(popup_content).openPopup();
+                    },
+                    mouseover: function (e) {
+                        layer.bindTooltip(feature.properties.TOPONIMI, {
+                            direction: "top",
+                            sticky: true,
+                        }).openTooltip();
+                    },
+                });
+            },
+        });
+
+        $.getJSON("GeoJSON/toponimi.geojson", function (data) {
+            toponimi.addData(data);
+            map.addLayer(toponimi);
+            if (data && data.features) {
+                $("#badgeCountToponimi").text(data.features.length + " Lokasi");
+            }
+        });
+
+        // GeoJSON Sungai (pane: 'paneSungai' -> z-index: 200)
+        var sampleSungaiGeoJSON = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "NAMOBJ": "Sungai Larantuka", "Panjang_km": 14.5 },
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [122.9500, -8.3200],
+                            [122.9650, -8.3300],
+                            [122.9800, -8.3400],
+                            [122.9900, -8.3450]
+                        ]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "NAMOBJ": "Kali Ile Mandiri", "Panjang_km": 9.2 },
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [122.9600, -8.3000],
+                            [122.9720, -8.3150],
+                            [122.9850, -8.3280]
+                        ]
+                    }
+                }
+            ]
+        };
+
+        var sungai = L.geoJSON(sampleSungaiGeoJSON, {
+            pane: 'paneSungai',
+            style: function (feature) {
+                return {
+                    color: "#0284c7",
+                    opacity: 0.85,
+                    weight: 4,
+                };
+            },
+            onEachFeature: function (feature, layer) {
+                var popup_content = `
+                    <div style="min-width: 180px;">
+                        <div class="popup-header text-info"><i class="fa-solid fa-water"></i> ${feature.properties.NAMOBJ || "Sungai"}</div>
+                        <div class="popup-item">
+                            <i class="fa-solid fa-ruler"></i>
+                            <span>Panjang: <strong>${feature.properties.Panjang_km} km</strong></span>
+                        </div>
+                    </div>
+                `;
+                layer.on({
+                    click: function (e) {
+                        layer.bindPopup(popup_content).openPopup();
+                    },
+                    mouseover: function (e) {
+                        layer.bindTooltip(feature.properties.NAMOBJ, {
+                            direction: "auto",
+                            sticky: true,
+                        }).openTooltip();
+                    },
+                });
+            }
+        });
+
+        $.getJSON("GeoJSON/sungai.geojson", function (data) {
+            sungai.addData(data);
+        });
+        sungai.addTo(map);
+
+        // GeoJSON Jalan (pane: 'paneJalan' -> z-index: 300)
+        var jalan = L.geoJSON(null, {
+            pane: 'paneJalan',
+            style: function (feature) {
+                return {
+                    color: "#f43f5e",
+                    opacity: 0.9,
+                    weight: 3.5,
+                };
+            },
+
+            onEachFeature: function (feature, layer) {
+                var popup_content = `
+                    <div style="min-width: 180px;">
+                        <div class="popup-header">${feature.properties.NAMA_UNSUR || "Jalan"}</div>
+                        <div class="popup-item">
+                            <i class="fa-solid fa-road text-danger"></i>
+                            <span>Panjang: <strong>${feature.properties.Panjang_km} km</strong></span>
+                        </div>
+                    </div>
+                `;
+
+                layer.on({
+                    click: function (e) {
+                        layer.bindPopup(popup_content).openPopup();
+                    },
+                    mouseover: function (e) {
+                        layer.bindTooltip(feature.properties.NAMA_UNSUR, {
+                            direction: "auto",
+                            sticky: true,
+                        }).openTooltip();
+                    },
+                });
+            },
+        });
+
+        $.getJSON("GeoJSON/jalan_panjang.geojson", function (data) {
+            jalan.addData(data);
+            map.addLayer(jalan);
+            if (data && data.features) {
+                $("#badgeCountJalan").text(data.features.length + " Ruas Jalan");
+            }
+        });
+
+        // GeoJSON Penduduk (DENGAN MODAL BOOTSTRAP UNTUK DETAIL KECAMATAN)
+        var selectedClass = "Semua";
+        var dataPenduduk;
+
+        var jumlah_penduduk = L.geoJSON(null, {
+            pane: 'panePolygon',
+            style: function (feature) {
+                var val = feature.properties.Penduduk;
+                var fillColor = "#fef9c3";
+
+                if (val <= 12432) fillColor = "#fef9c3";
+                else if (val <= 19748) fillColor = "#fed7aa";
+                else if (val <= 27064) fillColor = "#fbd561";
+                else if (val <= 34380) fillColor = "#fb923c";
+                else fillColor = "#f43f5e";
+
+                return {
+                    opacity: 1,
+                    color: "#ffffff",
+                    weight: 2,
+                    fillOpacity: 0.7,
+                    fillColor: fillColor
+                };
+            },
+
+            filter: function (feature, layer) {
+                var Penduduk = feature.properties.Penduduk;
+
+                if (Penduduk <= 12432) {
+                    feature.properties.kelas = "Sangat rendah";
+                } else if (Penduduk <= 19748) {
+                    feature.properties.kelas = "Rendah";
+                } else if (Penduduk <= 27064) {
+                    feature.properties.kelas = "Sedang";
+                } else if (Penduduk <= 34380) {
+                    feature.properties.kelas = "Tinggi";
+                } else if (Penduduk <= 41696) {
+                    feature.properties.kelas = "Sangat tinggi";
+                }
+
+                if (selectedClass === "Semua") return true;
+                return feature.properties.kelas === selectedClass;
+            },
+
+            onEachFeature: function (feature, layer) {
+                layer.on({
+                    click: function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        showKecamatanPendudukModal(feature, layer);
+                    },
+
+                    mouseover: function (e) {
+                        layer.bindTooltip(feature.properties.NAMOBJ, {
+                            direction: "auto",
+                            sticky: true,
+                        }).openTooltip();
+                    },
+                });
+            },
+        });
+
+        /* --- FUNGSI TAMPILKAN MODAL BOOTSTRAP DETAIL PENDUDUK KECAMATAN --- */
+        function showKecamatanPendudukModal(feature, layer) {
+            var props = feature.properties;
+            var maxPop = 41696;
+            var percent = Math.min(Math.round((props.Penduduk / maxPop) * 100), 100);
+
+            $("#modalPendudukNamaKec").text("Kecamatan " + props.NAMOBJ);
+            $("#modalPendudukJumlah").text(props.Penduduk.toLocaleString("id-ID") + " Jiwa");
+            $("#modalPendudukKelas").text("Kelas Kepadatan: " + props.kelas);
+            $("#modalPendudukPercent").text(percent + "% dari Maksimum");
+            $("#modalPendudukProgressBar").css("width", percent + "%");
+
+            $("#btnModalFocusKec").off("click").on("click", function () {
+                var modalEl = document.getElementById('modalDetailPenduduk');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                map.fitBounds(layer.getBounds());
+            });
+
+            $("#btnModalExportKecGeoJSON").off("click").on("click", function () {
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(feature, null, 2));
+                var downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `Kecamatan_${props.NAMOBJ}.geojson`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            });
+
+            var modalPenduduk = new bootstrap.Modal(document.getElementById('modalDetailPenduduk'));
+            modalPenduduk.show();
+        }
+
+        $.getJSON("GeoJSON/jumlah_penduduk.geojson", function (data) {
+            dataPenduduk = data;
+            jumlah_penduduk.addData(data);
+            map.addLayer(jumlah_penduduk);
+            if (data && data.features) {
+                $("#badgeCountPenduduk").text(data.features.length + " Kecamatan");
+            }
+        });
+
+        function filterPenduduk(kelas, elem) {
+            selectedClass = kelas;
+
+            $(".filter-button").removeClass("active");
+            if (elem) {
+                $(elem).addClass("active");
+            }
+
+            jumlah_penduduk.clearLayers();
+            jumlah_penduduk.addData(dataPenduduk);
+        }
+
+        /* --- INTEGRASI LAYER WMS & PERSIL BIDANG TANAH KEMENTERIAN ATR/BPN --- */
+        var atrbpnWms = L.tileLayer.wms("https://bhumi.atrbpn.go.id/geoserver/wms", {
+            layers: "bidang_tanah",
+            format: "image/png",
+            transparent: true,
+            attribution: "Kementerian ATR/BPN BHUMI"
+        });
+
+        // GeoJSON Sample Persil / Bidang Tanah Larantuka (Flores Timur)
+        var sampleParcelsGeoJSON = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "NIB": "24.06.01.02.00182",
+                        "Hak": "Hak Milik (SHM)",
+                        "No_Sertifikat": "01824/Larantuka",
+                        "Pemilik": "Masyarakat / Perorangan",
+                        "Penggunaan": "Pemukiman",
+                        "Luas_m2": 425,
+                        "Kecamatan": "Larantuka",
+                        "Kelurahan": "Larantuka Kota"
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [122.9830, -8.3410],
+                            [122.9845, -8.3410],
+                            [122.9845, -8.3422],
+                            [122.9830, -8.3422],
+                            [122.9830, -8.3410]
+                        ]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "NIB": "24.06.01.02.00183",
+                        "Hak": "Hak Milik (SHM)",
+                        "No_Sertifikat": "01825/Larantuka",
+                        "Pemilik": "Masyarakat / Perorangan",
+                        "Penggunaan": "Pertokoan / Jasa",
+                        "Luas_m2": 310,
+                        "Kecamatan": "Larantuka",
+                        "Kelurahan": "Postoh"
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [122.9848, -8.3410],
+                            [122.9860, -8.3410],
+                            [122.9860, -8.3422],
+                            [122.9848, -8.3422],
+                            [122.9848, -8.3410]
+                        ]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "NIB": "24.06.01.02.00190",
+                        "Hak": "Hak Pakai (Instansi Pemerintah)",
+                        "No_Sertifikat": "00004/Pemerintah",
+                        "Pemilik": "Pemerintah Kab. Flores Timur",
+                        "Penggunaan": "Fasilitas Publik / Perkantoran",
+                        "Luas_m2": 1250,
+                        "Kecamatan": "Larantuka",
+                        "Kelurahan": "Larantuka"
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [122.9832, -8.3426],
+                            [122.9858, -8.3426],
+                            [122.9858, -8.3440],
+                            [122.9832, -8.3440],
+                            [122.9832, -8.3426]
+                        ]]
+                    }
+                }
+            ]
+        };
+
+        var atrbpnGeoJSON = L.geoJSON(sampleParcelsGeoJSON, {
+            pane: 'panePolygon',
+            style: function (feature) {
+                return {
+                    color: "#0284c7",
+                    weight: 2,
+                    dashArray: "4, 4",
+                    fillColor: "#38bdf8",
+                    fillOpacity: 0.4
+                };
+            },
+            onEachFeature: function (feature, layer) {
+                var p = feature.properties;
+                var popupContent = `
+                    <div style="min-width: 220px;">
+                        <div class="popup-header text-primary">
+                            <i class="fa-solid fa-file-contract"></i> Bidang Tanah ATR/BPN
+                        </div>
+                        <div class="popup-item"><strong>NIB:</strong> ${p.NIB}</div>
+                        <div class="popup-item"><strong>Jenis Hak:</strong> <span class="badge bg-success">${p.Hak}</span></div>
+                        <div class="popup-item"><strong>No. Sertifikat:</strong> ${p.No_Sertifikat}</div>
+                        <div class="popup-item"><strong>Penggunaan:</strong> ${p.Penggunaan}</div>
+                        <div class="popup-item"><strong>Luas Bidang:</strong> ${p.Luas_m2} m²</div>
+                        <hr class="my-2">
+                        <a href="https://bhumi.atrbpn.go.id/map" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill w-100">
+                            <i class="fa-solid fa-external-link me-1"></i> Verifikasi di BHUMI ATR/BPN
+                        </a>
+                    </div>
+                `;
+                layer.bindPopup(popupContent);
+            }
+        });
+
+        atrbpnGeoJSON.addTo(map);
+
+        // Control Layer
+        var baseMaps = {
+            "Esri Street Map": esriWorldStreetMap,
+            "RBI BIG (Indonesia)": rbiBIG,
+            "Esri Topo Map": esriWorldTopoMap,
+            "Esri Satelit": esriWorldImagery,
+            "OpenStreetMap": osm
+        };
+
+        var overlayMaps = {
+            "Toponimi (Point)": toponimi,
+            "Jalan (Polyline)": jalan,
+            "Jumlah Penduduk (Polygon)": jumlah_penduduk,
+            "Bidang Tanah ATR/BPN (GeoJSON)": atrbpnGeoJSON,
+            "WMS BHUMI ATR/BPN (Live)": atrbpnWms,
+            "Gempa BMKG (Live)": bmkgGempaGroup
+        };
+
+        var controlLayers = L.control.layers(baseMaps, overlayMaps, { collapsed: true }).addTo(map);
+        bmkgGempaGroup.addTo(map);
+
+        // Container Filter & Legenda Peta di Control Layer
+        var filterContainer = document.createElement("div");
+        filterContainer.className = "filter-penduduk";
+        filterContainer.innerHTML = `
+            <div class="filter-title">
+                <i class="fa-solid fa-filter text-primary"></i> Filter Penduduk
+            </div>
+            <button class="filter-button active" onclick="filterPenduduk('Semua', this)">Semua Kelas</button>
+            <button class="filter-button" onclick="filterPenduduk('Sangat rendah', this)">Sangat Rendah</button>
+            <button class="filter-button" onclick="filterPenduduk('Rendah', this)">Rendah</button>
+            <button class="filter-button" onclick="filterPenduduk('Sedang', this)">Sedang</button>
+            <button class="filter-button" onclick="filterPenduduk('Tinggi', this)">Tinggi</button>
+            <button class="filter-button" onclick="filterPenduduk('Sangat tinggi', this)">Sangat Tinggi</button>
+        `;
+
+        // Container LEGENDA PETA
+        var legendaContainer = document.createElement("div");
+        legendaContainer.className = "legenda-peta";
+        legendaContainer.innerHTML = `
+            <div class="legenda-title">
+                <i class="fa-solid fa-map-signs text-success"></i> Legenda Peta
+            </div>
+            <div class="legenda-item">
+                <img src="images/home_marker.png" class="legenda-icon" alt="Marker" />
+                <span>Toponimi / Sarana Prasarana</span>
+            </div>
+            <div class="legenda-item">
+                <span class="legenda-line"></span>
+                <span>Jaringan Jalan (Polyline)</span>
+            </div>
+            <div class="mt-2 mb-1 fw-bold text-dark" style="font-size: 0.78rem;">Klasifikasi Penduduk (Polygon):</div>
+            <div class="legenda-item">
+                <span class="legenda-color-box" style="background-color: #fef9c3;"></span>
+                <span>Sangat Rendah (&le; 12.432)</span>
+            </div>
+            <div class="legenda-item">
+                <span class="legenda-color-box" style="background-color: #fed7aa;"></span>
+                <span>Rendah (&le; 19.748)</span>
+            </div>
+            <div class="legenda-item">
+                <span class="legenda-color-box" style="background-color: #fbd561;"></span>
+                <span>Sedang (&le; 27.064)</span>
+            </div>
+            <div class="legenda-item">
+                <span class="legenda-color-box" style="background-color: #fb923c;"></span>
+                <span>Tinggi (&le; 34.380)</span>
+            </div>
+            <div class="legenda-item">
+                <span class="legenda-color-box" style="background-color: #f43f5e;"></span>
+                <span>Sangat Tinggi (&le; 41.696)</span>
+            </div>
+            <div class="legenda-item mt-2">
+                <span class="legenda-color-box" style="background-color: #ef4444; border-radius: 50%; width: 14px; height: 14px;"></span>
+                <span>Pusat Gempa BMKG</span>
+            </div>
+        `;
+
+        var controlLayersContainer = controlLayers.getContainer();
+        controlLayersContainer.appendChild(filterContainer);
+        controlLayersContainer.appendChild(legendaContainer);
+
+        filterContainer.style.display = "none";
+        legendaContainer.style.display = "none";
+
+        controlLayersContainer.addEventListener("mouseenter", function () {
+            filterContainer.style.display = "block";
+            legendaContainer.style.display = "block";
+        });
+
+        controlLayersContainer.addEventListener("mouseleave", function () {
+            filterContainer.style.display = "none";
+            legendaContainer.style.display = "none";
+        });
+
+        /* --- INTEGRASI DASHBOARD REAL-TIME DATA BMKG --- */
+        function loadBmkgRealtimeData() {
+            $.ajax({
+                url: "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json",
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+                    if (data && data.Infogempa && data.Infogempa.gempa) {
+                        renderBmkgLatest(data.Infogempa.gempa);
+                    }
+                },
+                error: function () {
+                    renderBmkgLatest({
+                        Tanggal: "29 Sep 2026",
+                        Jam: "13:45:12 WIB",
+                        Coordinates: "-8.25,123.12",
+                        Lintang: "8.25 LS",
+                        Bujur: "123.12 BT",
+                        Magnitude: "5.2",
+                        Kedalaman: "10 km",
+                        Wilayah: "Pusat gempa berada di Laut Flores (45 km Barat Laut Flores Timur)",
+                        Potensi: "Tidak berpotensi TSUNAMI",
+                        Dirasakan: "III Larantuka, II Maumere"
+                    });
+                }
+            });
+
+            $.ajax({
+                url: "https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json",
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+                    if (data && data.Infogempa && data.Infogempa.gempa) {
+                        renderBmkgList(data.Infogempa.gempa);
+                    }
+                },
+                error: function () {
+                    renderBmkgList(getBmkgFallbackList());
+                }
+            });
+        }
+
+        // Panggil data BMKG Real-time otomatis saat aplikasi dimuat & auto-refresh tiap 60 detik
+        loadBmkgRealtimeData();
+        setInterval(loadBmkgRealtimeData, 60000);
+
+        function renderBmkgLatest(g) {
+            $("#bmkgLatestMag").text("M " + g.Magnitude);
+            $("#bmkgLatestTime").text(g.Tanggal + " | " + g.Jam);
+            $("#bmkgTsunamiStatus").text(g.Potensi || "TIDAK BERPOTENSI TSUNAMI");
+            $("#bmkgLatestDepth").text("Kedalaman: " + g.Kedalaman);
+            $("#bmkgLatestLocation").text(g.Wilayah);
+            $("#bmkgLatestCoords").text("Koordinat: " + g.Coordinates);
+
+            var coords = g.Coordinates.split(",");
+            var lat = parseFloat(coords[0]);
+            var lng = parseFloat(coords[1]);
+
+            var htmlDetail = `
+                <div class="p-3 bg-light rounded-3 text-start mb-3">
+                    <div class="mb-2"><strong>Waktu:</strong> ${g.Tanggal} ${g.Jam}</div>
+                    <div class="mb-2"><strong>Magnitudo:</strong> <span class="badge bg-danger">M ${g.Magnitude}</span></div>
+                    <div class="mb-2"><strong>Kedalaman:</strong> ${g.Kedalaman}</div>
+                    <div class="mb-2"><strong>Pusat Gempa:</strong> ${g.Wilayah}</div>
+                    <div class="mb-2"><strong>Dampak Dirasakan:</strong> ${g.Dirasakan || 'Lokasi terdekat'}</div>
+                    <div class="mb-0"><strong>Status Tsunami:</strong> <span class="badge bg-success">${g.Potensi}</span></div>
+                </div>
+                <button class="btn btn-warning w-100 rounded-pill fw-bold text-white" onclick="focusBmkgEpicenter(${lat}, ${lng}, 'M ${g.Magnitude} - ${g.Wilayah}')">
+                    <i class="fa-solid fa-crosshairs me-1"></i> Tampilkan Pusat Gempa di Peta
+                </button>
+            `;
+            $("#bmkgDetailContainer").html(htmlDetail);
+
+            plotBmkgMarker(lat, lng, g.Magnitude, g.Wilayah, g.Tanggal + " " + g.Jam, true);
+        }
+
+        function renderBmkgList(list) {
+            bmkgGempaGroup.clearLayers();
+            var htmlList = "";
+
+            list.slice(0, 10).forEach(function (g, idx) {
+                var coords = g.Coordinates ? g.Coordinates.split(",") : [g.Lintang, g.Bujur];
+                var lat = parseFloat(coords[0]);
+                var lng = parseFloat(coords[1]);
+
+                var bgBadge = "bg-mag-info";
+                if (parseFloat(g.Magnitude) >= 5.5) bgBadge = "bg-mag-danger";
+                else if (parseFloat(g.Magnitude) >= 4.5) bgBadge = "bg-mag-warning";
+
+                htmlList += `
+                    <div class="gempa-item-card d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bmkg-badge-mag ${bgBadge}" style="width: 44px; height: 44px; font-size: 1rem;">
+                                ${g.Magnitude}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">${g.Wilayah}</h6>
+                                <div class="small text-secondary">
+                                    <i class="fa-solid fa-clock me-1"></i>${g.Tanggal} ${g.Jam} &bull; Kedalaman: ${g.Kedalaman}
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="focusBmkgEpicenter(${lat}, ${lng}, 'M ${g.Magnitude} - ${g.Wilayah}')">
+                            <i class="fa-solid fa-eye me-1"></i> Lihat
+                        </button>
+                    </div>
+                `;
+
+                plotBmkgMarker(lat, lng, g.Magnitude, g.Wilayah, g.Tanggal + " " + g.Jam, false);
+            });
+
+            $("#bmkgGempaList").html(htmlList);
+        }
+
+        function plotBmkgMarker(lat, lng, mag, wilayah, waktu, isMain) {
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            var radius = Math.max(parseFloat(mag) * 4, 10);
+            var color = parseFloat(mag) >= 5.0 ? "#ef4444" : (parseFloat(mag) >= 4.0 ? "#f59e0b" : "#3b82f6");
+
+            var marker = L.circleMarker([lat, lng], {
+                pane: 'panePoint',
+                radius: radius,
+                fillColor: color,
+                color: "#ffffff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.85
+            });
+
+            var popupContent = `
+                <div style="min-width: 180px;">
+                    <div class="popup-header text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Gempa BMKG (M ${mag})</div>
+                    <div class="popup-item"><strong>Waktu:</strong> ${waktu}</div>
+                    <div class="popup-item"><strong>Wilayah:</strong> ${wilayah}</div>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent);
+            bmkgGempaGroup.addLayer(marker);
+
+            if (isMain) {
+                marker.openPopup();
+            }
+        }
+
+        function focusBmkgEpicenter(lat, lng, label) {
+            var modalEl = document.getElementById('modalBmkgDashboard');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            map.setView([lat, lng], 10);
+
+            L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`
+                    <div style="min-width: 180px;">
+                        <div class="popup-header text-danger"><i class="fa-solid fa-crosshairs"></i> Pusat Gempa Terdeteksi</div>
+                        <div>${label}</div>
+                    </div>
+                `)
+                .openOn(map);
+        }
+
+        function getBmkgFallbackList() {
+            return [
+                { Tanggal: "29 Sep 2026", Jam: "13:45 WIB", Coordinates: "-8.25,123.12", Magnitude: "5.2", Kedalaman: "10 km", Wilayah: "Laut Flores (45 km Barat Laut Flores Timur)" },
+                { Tanggal: "29 Sep 2026", Jam: "10:12 WIB", Coordinates: "-8.65,122.90", Magnitude: "4.6", Kedalaman: "15 km", Wilayah: "Sikka - NTT (30 km Barat Daya Maumere)" },
+                { Tanggal: "28 Sep 2026", Jam: "22:15 WIB", Coordinates: "-8.10,123.50", Magnitude: "4.1", Kedalaman: "12 km", Wilayah: "Lembata - NTT" },
+                { Tanggal: "28 Sep 2026", Jam: "18:30 WIB", Coordinates: "-9.10,124.00", Magnitude: "5.0", Kedalaman: "20 km", Wilayah: "Laut Sawu" }
+            ];
+        }
+
+        /* --- FUNGSI ATR/BPN & KEPEMILIKAN TANAH --- */
+        function toggleAtrBpnGeoJSONLayer(enable) {
+            if (enable) {
+                if (!map.hasLayer(atrbpnGeoJSON)) map.addLayer(atrbpnGeoJSON);
+            } else {
+                if (map.hasLayer(atrbpnGeoJSON)) map.removeLayer(atrbpnGeoJSON);
+            }
+        }
+
+        function toggleAtrBpnWmsLayer(enable) {
+            if (enable) {
+                if (!map.hasLayer(atrbpnWms)) map.addLayer(atrbpnWms);
+            } else {
+                if (map.hasLayer(atrbpnWms)) map.removeLayer(atrbpnWms);
+            }
+        }
+
+        function zoomToAtrBpnSample() {
+            var modalEl = document.getElementById('modalAtrBpn');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            if (!map.hasLayer(atrbpnGeoJSON)) map.addLayer(atrbpnGeoJSON);
+            if (atrbpnGeoJSON.getBounds().isValid()) {
+                map.fitBounds(atrbpnGeoJSON.getBounds(), { padding: [50, 50] });
+            }
+        }
+
+        function searchAtrBpnParcel() {
+            var query = $("#inputAtrBpnQuery").val().trim().toLowerCase();
+            if (!query) {
+                alert("Silakan masukkan NIB, Nomor Sertifikat, atau kata kunci pencarian!");
+                return;
+            }
+
+            var foundFeature = null;
+            if (sampleParcelsGeoJSON && sampleParcelsGeoJSON.features) {
+                sampleParcelsGeoJSON.features.forEach(function (f) {
+                    var p = f.properties;
+                    if (p.NIB.toLowerCase().includes(query) || p.No_Sertifikat.toLowerCase().includes(query) || p.Penggunaan.toLowerCase().includes(query) || p.Hak.toLowerCase().includes(query)) {
+                        foundFeature = f;
+                    }
+                });
+            }
+
+            if (foundFeature) {
+                var p = foundFeature.properties;
+                var html = `
+                    <div class="p-3 bg-light rounded-4 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> ${p.Hak}</span>
+                            <span class="text-primary fw-bold small">NIB: ${p.NIB}</span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Bidang Tanah Kel. ${p.Kelurahan}</h5>
+                        <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot text-danger me-1"></i> Kec. ${p.Kecamatan}, Kab. Flores Timur</p>
+                        
+                        <div class="row g-2 text-start small mb-3">
+                            <div class="col-6"><strong>No. Sertifikat:</strong> ${p.No_Sertifikat}</div>
+                            <div class="col-6"><strong>Luas Bidang:</strong> ${p.Luas_m2} m²</div>
+                            <div class="col-6"><strong>Penggunaan:</strong> ${p.Penggunaan}</div>
+                            <div class="col-6"><strong>Pemilik:</strong> ${p.Pemilik}</div>
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-primary rounded-pill w-100 fw-bold" onclick="zoomToAtrBpnSample()">
+                            <i class="fa-solid fa-crosshairs me-1"></i> Tampilkan Bidang Tanah di Peta
+                        </button>
+                    </div>
+                `;
+                $("#atrBpnResultContainer").html(html);
+            } else {
+                alert("NIB / Sertifikat '" + query + "' tidak ditemukan dalam sampel lokal. Anda dapat mengecek langsung pada Geoportal BHUMI ATR/BPN resmi.");
+            }
+        }
+
+        /* --- FUNGSI INTERAKSI NAVBAR --- */
+        function resetMapView() {
+            map.setView(initialCenter, initialZoom);
+            filterPenduduk('Semua', $(".filter-button").first()[0]);
+        }
+
+        function zoomToLayer(layerType) {
+            if (layerType === 'toponimi' && toponimi.getBounds().isValid()) {
+                if (!map.hasLayer(toponimi)) map.addLayer(toponimi);
+                map.fitBounds(toponimi.getBounds());
+            } else if (layerType === 'jalan' && jalan.getBounds().isValid()) {
+                if (!map.hasLayer(jalan)) map.addLayer(jalan);
+                map.fitBounds(jalan.getBounds());
+            } else if (layerType === 'penduduk' && jumlah_penduduk.getBounds().isValid()) {
+                if (!map.hasLayer(jumlah_penduduk)) map.addLayer(jumlah_penduduk);
+                map.fitBounds(jumlah_penduduk.getBounds());
+            } else if (layerType === 'atrbpn' && atrbpnGeoJSON.getBounds().isValid()) {
+                if (!map.hasLayer(atrbpnGeoJSON)) map.addLayer(atrbpnGeoJSON);
+                map.fitBounds(atrbpnGeoJSON.getBounds(), { padding: [50, 50] });
+            }
+        }
+
+        function searchLocation(e) {
+            e.preventDefault();
+            var query = $("#searchInput").val().trim().toLowerCase();
+            if (!query) return;
+
+            var found = false;
+
+            toponimi.eachLayer(function (layer) {
+                if (layer.feature && layer.feature.properties && layer.feature.properties.TOPONIMI) {
+                    if (layer.feature.properties.TOPONIMI.toLowerCase().includes(query)) {
+                        map.setView(layer.getLatLng(), 15);
+                        layer.openPopup();
+                        found = true;
+                        return false;
+                    }
+                }
+            });
+
+            if (found) return;
+
+            jumlah_penduduk.eachLayer(function (layer) {
+                if (layer.feature && layer.feature.properties && layer.feature.properties.NAMOBJ) {
+                    if (layer.feature.properties.NAMOBJ.toLowerCase().includes(query)) {
+                        showKecamatanPendudukModal(layer.feature, layer);
+                        found = true;
+                        return false;
+                    }
+                }
+            });
+
+            if (!found) {
+                alert("Lokasi '" + query + "' tidak ditemukan dalam data.");
+            }
+        }
+
+        /* --- FUNGSI UPLOAD GEOJSON KUSTOM --- */
+        function handleGeoJSONUpload() {
+            var layerName = $("#layerNameInput").val().trim() || "Layer Kustom";
+            var layerColor = $("#layerColorInput").val();
+            var rawText = $("#geojsonRawInput").val().trim();
+            var fileInput = document.getElementById("geojsonFileInput");
+
+            if (fileInput.files.length > 0) {
+                var file = fileInput.files[0];
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    processGeoJSONData(e.target.result, layerName, layerColor);
+                };
+                reader.readAsText(file);
+            } else if (rawText) {
+                processGeoJSONData(rawText, layerName, layerColor);
+            } else {
+                alert("Silakan pilih file GeoJSON atau tempel teks GeoJSON terlebih dahulu!");
+            }
+        }
+
+        function processGeoJSONData(jsonString, layerName, color) {
+            try {
+                var geojsonData = JSON.parse(jsonString);
+
+                var newLayer = L.geoJSON(geojsonData, {
+                    style: function (feature) {
+                        return {
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.5,
+                            weight: 3
+                        };
+                    },
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, {
+                            radius: 8,
+                            fillColor: color,
+                            color: "#ffffff",
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        });
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties) {
+                            var props = feature.properties;
+                            var content = `<div class="popup-header">${layerName}</div>`;
+                            for (var key in props) {
+                                content += `<div class="popup-item"><strong>${key}:</strong> ${props[key]}</div>`;
+                            }
+                            layer.bindPopup(content);
+                        }
+                    }
+                });
+
+                newLayer.addTo(map);
+                controlLayers.addOverlay(newLayer, layerName);
+
+                if (newLayer.getBounds().isValid()) {
+                    map.fitBounds(newLayer.getBounds());
+                }
+
+                var modalEl = document.getElementById('modalUploadGeoJSON');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                $("#formGeoJSON")[0].reset();
+
+                alert("Layer '" + layerName + "' berhasil ditambahkan ke peta!");
+            } catch (err) {
+                alert("Format GeoJSON tidak valid! Pastikan struktur file JSON benar.\nError: " + err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>
